@@ -14,6 +14,9 @@ import {
   Link as LinkIcon,
 } from 'lucide-react'
 
+// Add this import for CSS handling
+import Head from 'next/head'
+
 interface PeelResponseProps {
   data: PEELGeneratorResponse
 }
@@ -181,12 +184,16 @@ const PeelResponse: React.FC<PeelResponseProps> = ({ data }) => {
 
   return (
     <div className="space-y-6">
-      {/* Custom styles for primary-colored bullets */}
-      <style jsx global>{`
-        .list-items-primary li::marker {
-          color: var(--primary);
-        }
-      `}</style>
+      {/* Custom styles for primary-colored bullets - Properly implemented */}
+      <Head>
+        <style>
+          {`
+            .list-items-primary li::marker {
+              color: var(--primary);
+            }
+          `}
+        </style>
+      </Head>
 
       {/* Title Card */}
       <Card className="overflow-hidden rounded-xl shadow-sm">
