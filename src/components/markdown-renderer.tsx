@@ -148,10 +148,7 @@ const TableComponent = ({ children, ...props }: React.HTMLProps<HTMLTableElement
   </div>
 )
 
-const TableHeaderComponent = ({
-  children,
-  ...props
-}: React.HTMLProps<HTMLTableHeaderCellElement>) => (
+const TableHeaderComponent = ({ children, ...props }: React.HTMLProps<HTMLTableCellElement>) => (
   <th
     className="border border-gray-300 bg-gray-100 px-4 py-2 text-left dark:border-gray-700 dark:bg-gray-800"
     {...props}
@@ -160,7 +157,7 @@ const TableHeaderComponent = ({
   </th>
 )
 
-const TableCellComponent = ({ children, ...props }: React.HTMLProps<HTMLTableDataCellElement>) => (
+const TableCellComponent = ({ children, ...props }: React.HTMLProps<HTMLTableCellElement>) => (
   <td className="border border-gray-300 px-4 py-2 dark:border-gray-700" {...props}>
     {children}
   </td>
