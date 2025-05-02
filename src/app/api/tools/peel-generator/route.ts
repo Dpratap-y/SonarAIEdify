@@ -33,7 +33,7 @@ export async function POST(req: Request) {
 
       // Call the AI service
       console.log('Calling AI service...')
-      const result = await generateAiResponse<PEELGeneratorResponse>({
+      const result = await generateAiResponse({
         systemPrompt,
         schemaDescription,
         userPrompt,
@@ -43,6 +43,28 @@ export async function POST(req: Request) {
 
       console.log('AI response generated:', typeof result.response)
       console.log('usage:', result.usage)
+
+      // Add detailed logging to check the format of feedback fields
+      if (result.response) {
+        console.log('Response structure check:')
+        console.log('- Content exists:', !!result.response.content)
+        console.log('- Feedback exists:', !!result.response.content?.feedback)
+
+        const strengths = result.response.content?.feedback?.strengths
+        const improvements = result.response.content?.feedback?.improvements
+
+        console.log('- Strengths type:', typeof strengths)
+        console.log('- Is strengths array?', Array.isArray(strengths))
+        if (strengths) {
+          console.log('- Strengths value:', JSON.stringify(strengths, null, 2))
+        }
+
+        console.log('- Improvements type:', typeof improvements)
+        console.log('- Is improvements array?', Array.isArray(improvements))
+        if (improvements) {
+          console.log('- Improvements value:', JSON.stringify(improvements, null, 2))
+        }
+      }
 
       // Check if there's an error from the AI service
       if (result.error) {
@@ -59,7 +81,7 @@ export async function POST(req: Request) {
       // Return the successful response
       return NextResponse.json(
         {
-          data: result.response,
+          data: result.response as PEELGeneratorResponse,
           usage: result.usage,
         },
         {

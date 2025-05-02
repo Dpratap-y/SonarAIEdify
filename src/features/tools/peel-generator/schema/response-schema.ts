@@ -1,5 +1,11 @@
 import { z } from 'zod'
 
+// Create a helper schema for handling both string and array feedback formats
+const feedbackItemSchema = z.union([
+  z.string(),
+  z.array(z.string()).transform((arr) => arr.join('\n\n')),
+])
+
 // Schema for the PEEL content (point, evidence, explanation, link)
 const peelContentSchema = z.object({
   point: z.string(),
@@ -7,9 +13,8 @@ const peelContentSchema = z.object({
   explanation: z.string(),
   link: z.string(),
   feedback: z.object({
-    // Allow both string and array formats for feedback
-    strengths: z.union([z.string(), z.array(z.string()).transform((arr) => arr.join('\n\n'))]),
-    improvements: z.union([z.string(), z.array(z.string()).transform((arr) => arr.join('\n\n'))]),
+    strengths: feedbackItemSchema,
+    improvements: feedbackItemSchema,
   }),
 })
 
