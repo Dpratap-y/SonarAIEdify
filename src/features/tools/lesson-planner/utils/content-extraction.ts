@@ -100,11 +100,11 @@ export function cleanContent(content: string): string[] {
   // Remove headings - Fixed ReDoS vulnerability by using a more specific pattern
   // Avoid using nested quantifiers with optional character classes
   let cleaned = content.replace(/^(#{1,6}\s+[^\n]{0,500}\n|\*\*[^\n]{0,500}\*\*\s*\n)/gm, '')
-  
+
   // Remove HTML tags - Fixed ReDoS vulnerability by using a more conservative approach
   // Avoid using greedy .* pattern within brackets
   cleaned = cleaned.replace(/<[^>]{0,1000}>/g, '')
-  
+
   // Split by newlines and filter empty lines
   return cleaned
     .split('\n')
@@ -227,7 +227,7 @@ export function processDifferentiationContent(
         .replace(/-\s*Support/g, '')
         .replace(/Support/g, '')
         .trim()
-      
+
       if (cleanedItem) {
         currentContent.push(cleanedItem)
       }
@@ -250,7 +250,7 @@ export function processDifferentiationContent(
         .replace(/-\s*Core/g, '')
         .replace(/Core/g, '')
         .trim()
-        
+
       if (cleanedItem) {
         currentContent.push(cleanedItem)
       }
@@ -273,7 +273,7 @@ export function processDifferentiationContent(
         .replace(/-\s*Extension/g, '')
         .replace(/Extension/g, '')
         .trim()
-        
+
       if (cleanedItem) {
         currentContent.push(cleanedItem)
       }
