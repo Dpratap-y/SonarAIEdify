@@ -86,7 +86,7 @@ export function extractSection(
  * Extracts a value from markdown content using a key pattern
  */
 export function extractValue(content: string, key: string): string {
-  const regex = new RegExp(`\\*\\*${key}\\*\\*\\s+(.+)`, 'i')
+  const regex = new RegExp(`\\*\\*${key}\\*\\*\\s+([^\\n]+)`, 'i')
   const match = content.match(regex)
   return match ? match[1].trim() : ''
 }
@@ -97,10 +97,14 @@ export function extractValue(content: string, key: string): string {
 export function cleanContent(content: string): string[] {
   if (!content) return []
 
-  // Remove headings
-  let cleaned = content.replace(/^(#+\s*.*?\s*\n|\*\*.*?\*\*\s*\n)/gm, '')
-  // Remove HTML tags
-  cleaned = cleaned.replace(/<[^>]*>/g, '')
+  // Remove headings - Fixed ReDoS vulnerability by using a more specific pattern
+  // Avoid using nested quantifiers with optional character classes
+  let cleaned = content.replace(/^(#{1,6}\s+[^\n]{0,500}\n|\*\*[^\n]{0,500}\*\*\s*\n)/gm, '')
+  
+  // Remove HTML tags - Fixed ReDoS vulnerability by using a more conservative approach
+  // Avoid using greedy .* pattern within brackets
+  cleaned = cleaned.replace(/<[^>]{0,1000}>/g, '')
+  
   // Split by newlines and filter empty lines
   return cleaned
     .split('\n')
@@ -108,15 +112,15 @@ export function cleanContent(content: string): string[] {
       // Trim whitespace
       let trimmed = line.trim()
       // Skip empty lines and header markers
-      if (!trimmed || trimmed.match(/^#+$|^#{3,}$/)) {
+      if (!trimmed || trimmed.match(/^#{1,6}$/)) {
         return ''
       }
 
       // Remove bullet points and dashes at the beginning of lines
       trimmed = trimmed.replace(/^[-•*]\s+/, '')
 
-      // Remove markdown asterisks
-      trimmed = trimmed.replace(/\*{1,}/g, '')
+      // Remove markdown asterisks - Avoid unbounded repetition
+      trimmed = trimmed.replace(/\*{1,2}/g, '')
 
       // Clean numbered list items (e.g., "1. ", "2. ")
       trimmed = trimmed.replace(/^\d+\.\s+/, '')
@@ -135,7 +139,7 @@ export function processCrossCurricular(
   if (!content) return []
 
   // Clean the content first
-  const cleanedContent = content.replace(/^(#+\s*)?Cross-Curricular Links\s*\n/i, '')
+  const cleanedContent = content.replace(/^(#{1,6}\s*)?Cross-Curricular Links\s*\n/i, '')
   const lines = cleanedContent
     .split('\n')
     .map((line) => line.trim())
@@ -148,8 +152,8 @@ export function processCrossCurricular(
   lines.forEach((line) => {
     // Remove hash symbols, asterisks, and dashes at the beginning
     line = line
-      .replace(/^#+$|^#{3,}$/g, '') // Remove hash symbols
-      .replace(/\*{1,}/g, '') // Remove all asterisks
+      .replace(/^#{1,6}$/g, '') // Remove hash symbols - Bound the repetition
+      .replace(/\*{1,2}/g, '') // Remove asterisks - Bound the repetition
       .replace(/^[-*•]\s+/, '') // Remove bullet points
       .trim()
 
@@ -157,7 +161,7 @@ export function processCrossCurricular(
 
     // Special case for lines with subject identifiers
     // E.g., "- **English**:" or "English:" or "**English**:" or just "English"
-    const subjectMatch = line.match(/^(?:-\s*)?(?:\*\*)?([A-Za-z]+)(?:\*\*)?:?\s*(.*)/)
+    const subjectMatch = line.match(/^(?:-\s*)?(?:\*\*)?([A-Za-z]{1,30})(?:\*\*)?:?\s*(.*)/)
 
     if (subjectMatch) {
       const subject = subjectMatch[1].trim()
@@ -216,7 +220,14 @@ export function processDifferentiationContent(
         currentContent = []
       }
       currentType = 'support'
-      cleanedItem = cleanedItem.replace(/Support:|\*+\s*-?\s*Support:?|\*+/g, '').trim()
+      // Fix ReDoS vulnerability by splitting complex regex into simpler parts
+      cleanedItem = cleanedItem
+        .replace(/Support:/g, '')
+        .replace(/\*+/g, '')
+        .replace(/-\s*Support/g, '')
+        .replace(/Support/g, '')
+        .trim()
+      
       if (cleanedItem) {
         currentContent.push(cleanedItem)
       }
@@ -232,7 +243,14 @@ export function processDifferentiationContent(
         currentContent = []
       }
       currentType = 'core'
-      cleanedItem = cleanedItem.replace(/Core:|\*+\s*-?\s*Core:?|\*+/g, '').trim()
+      // Fix ReDoS vulnerability by splitting complex regex into simpler parts
+      cleanedItem = cleanedItem
+        .replace(/Core:/g, '')
+        .replace(/\*+/g, '')
+        .replace(/-\s*Core/g, '')
+        .replace(/Core/g, '')
+        .trim()
+        
       if (cleanedItem) {
         currentContent.push(cleanedItem)
       }
@@ -248,7 +266,14 @@ export function processDifferentiationContent(
         currentContent = []
       }
       currentType = 'extension'
-      cleanedItem = cleanedItem.replace(/Extension:|\*+\s*-?\s*Extension:?|\*+/g, '').trim()
+      // Fix ReDoS vulnerability by splitting complex regex into simpler parts
+      cleanedItem = cleanedItem
+        .replace(/Extension:/g, '')
+        .replace(/\*+/g, '')
+        .replace(/-\s*Extension/g, '')
+        .replace(/Extension/g, '')
+        .trim()
+        
       if (cleanedItem) {
         currentContent.push(cleanedItem)
       }

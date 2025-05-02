@@ -171,7 +171,9 @@ const PeelResponse: React.FC<PeelResponseProps> = ({ data }) => {
     // If the text appears to have markdown-like formatting but with ** that might be getting interpreted as literal
     if (text.includes('**') || text.includes('##')) {
       // Clean up and ensure proper markdown format
-      return text.replace(/^\*\*([^*]+)\*\*/gm, '**$1**').replace(/^##\s+(.+)$/gm, '## $1')
+      return text
+        .replace(/^\*\*([^*]{1,500})\*\*/gm, '**$1**')
+        .replace(/^##\s+([^\n]{1,500})$/gm, '## $1')
     }
 
     return text
