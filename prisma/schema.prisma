@@ -1,0 +1,101 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @db.Uuid
+  email          String   @unique
+  fullName       String?  @map("full_name")
+  avatarUrl      String?  @map("avatar_url")
+  organizationId String?  @map("organization_id") @db.Uuid
+  role           String   @default("user")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization?        @relation(fields: [organizationId], references: [id])
+  memberships  OrganizationMember[]
+  toolAccess   UserToolAccess[]
+
+  @@map("users")
+}
+
+model Organization {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  slug      String   @unique
+  logoUrl   String?  @map("logo_url")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  users      User[]
+  members    OrganizationMember[]
+  toolAccess OrganizationToolAccess[]
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  organizationId String   @map("organization_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  role           String   @default("member")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, userId])
+  @@map("organization_members")
+}
+
+model AITool {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  description String?
+  icon        String?
+  slug        String   @unique
+  isPublic    Boolean  @default(false) @map("is_public")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  userAccess         UserToolAccess[]
+  organizationAccess OrganizationToolAccess[]
+
+  @@map("ai_tools")
+}
+
+model UserToolAccess {
+  userId    String   @map("user_id") @db.Uuid
+  toolId    String   @map("tool_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tool AITool @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@id([userId, toolId])
+  @@map("user_tool_access")
+}
+
+model OrganizationToolAccess {
+  organizationId String   @map("organization_id") @db.Uuid
+  toolId         String   @map("tool_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  tool         AITool       @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, toolId])
+  @@map("organization_tool_access")
+}

@@ -1,0 +1,118 @@
+name: 🚀 Pull Request
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_TEAM_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+on:
+  pull_request:
+    branches-ignore:
+      - main
+
+concurrency:
+  group: ${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  eslint:
+    name: ⬣ ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 📥 Download deps with pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: |
+            - recursive: true
+              args: [--frozen-lockfile]
+
+      - name: 🔬 Lint
+        run: pnpm run lint
+
+  commitlint:
+    name: ⚙️ CommitLint
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: ⚙️ Commitlint
+        uses: wagoid/commitlint-github-action@v6
+
+  knip:
+    name: 📦 Knip
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 📥 Download deps with pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: |
+            - recursive: true
+              args: [--frozen-lockfile]
+
+      - name: 📦 Knip
+        run: pnpm run knip
+
+  deploy:
+    name: 🚀 Deploy Preview
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 📥 Download deps with pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: |
+            - recursive: true
+              args: [--frozen-lockfile]
+
+      - name: 📦 Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: 🔄 Pull Vercel Environment Variables
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }} --git-branch=${{ github.head_ref }}
+
+      - name: 🏗️ Build Project Artifacts
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: 🚀 Deploy Project to Vercel
+        run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} > deployment-url.txt
+
+      - name: 📝 Comment PR with Preview URL
+        run: |
+          URL=$(cat deployment-url.txt)
+          echo "Vercel preview URL: $URL"
+          gh pr comment ${{ github.event.pull_request.number }} --body "Vercel preview URL: $URL"
