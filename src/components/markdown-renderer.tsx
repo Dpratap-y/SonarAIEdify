@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import Markdown from 'markdown-to-jsx'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { materialOceanic } from 'react-syntax-highlighter/dist/cjs/styles/prism'
@@ -28,7 +28,7 @@ const transformContent = (content: string) => {
 
 // Custom components for different elements
 const CodeComponent = ({ children, className, ...props }: React.HTMLProps<HTMLElement>) => {
-  const match = /language-(\w+)/.exec(className || '')
+  const match = /language-(\w+)/.exec(className ?? '')
   const language = match ? match[1] : ''
 
   if (className && language) {
@@ -171,12 +171,15 @@ const HRComponent = (props: React.HTMLProps<HTMLHRElement>) => (
 )
 
 const ImageComponent = ({ src, alt }: React.HTMLProps<HTMLImageElement>) => {
-  if (!src) return null
+  if (!src) {
+    console.error('ImageComponent: Missing image source')
+    return null
+  }
   return (
     <div className="my-4 h-auto max-w-full">
       <Image
         src={src}
-        alt={alt || ''}
+        alt={alt ?? ''}
         width={800}
         height={500}
         className="rounded"
@@ -205,42 +208,46 @@ const DivComponent = ({ className, children, ...props }: React.HTMLProps<HTMLDiv
   )
 }
 
+// Define variant styles outside component to prevent recreation
+const VARIANT_STYLES = {
+  default: 'prose prose-sm dark:prose-invert max-w-none',
+  compact: 'prose-xs space-y-2 max-w-none',
+  'lesson-plan':
+    'prose prose-sm prose-headings:text-indigo-700 dark:prose-headings:text-indigo-300 max-w-none',
+  chat: 'prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-2 prose-li:my-0.5',
+}
+
 const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   content,
   className,
   allowHtml = true,
   variant = 'default',
 }) => {
-  const variantStyles = {
-    default: 'prose prose-sm dark:prose-invert max-w-none',
-    compact: 'prose-xs space-y-2 max-w-none',
-    'lesson-plan':
-      'prose prose-sm prose-headings:text-indigo-700 dark:prose-headings:text-indigo-300 max-w-none',
-    chat: 'prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-2 prose-li:my-0.5',
-  }
-
-  // Define customized component overrides for markdown-to-jsx
-  const overrides = {
-    code: CodeComponent,
-    h1: H1Component,
-    h2: H2Component,
-    h3: H3Component,
-    p: ParagraphComponent,
-    ul: UnorderedListComponent,
-    ol: OrderedListComponent,
-    li: ListItemComponent,
-    a: AnchorComponent,
-    blockquote: BlockquoteComponent,
-    table: TableComponent,
-    th: TableHeaderComponent,
-    td: TableCellComponent,
-    hr: HRComponent,
-    img: ImageComponent,
-    div: DivComponent,
-  }
+  // Use memoized overrides to prevent unnecessary re-creation
+  const overrides = useMemo(
+    () => ({
+      code: CodeComponent,
+      h1: H1Component,
+      h2: H2Component,
+      h3: H3Component,
+      p: ParagraphComponent,
+      ul: UnorderedListComponent,
+      ol: OrderedListComponent,
+      li: ListItemComponent,
+      a: AnchorComponent,
+      blockquote: BlockquoteComponent,
+      table: TableComponent,
+      th: TableHeaderComponent,
+      td: TableCellComponent,
+      hr: HRComponent,
+      img: ImageComponent,
+      div: DivComponent,
+    }),
+    []
+  )
 
   return (
-    <div className={cn(variantStyles[variant], className)}>
+    <div className={cn(VARIANT_STYLES[variant], className)}>
       <Markdown
         options={{
           overrides,
