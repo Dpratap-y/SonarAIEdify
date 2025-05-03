@@ -169,11 +169,9 @@ export function processCrossCurricular(
 
       currentSubject = subject
       currentDescription = description
-    } else {
+    } else if (currentSubject) {
       // This is a continuation of the description
-      if (currentSubject) {
-        currentDescription += ' ' + line
-      }
+      currentDescription += ' ' + line
     }
   })
 
