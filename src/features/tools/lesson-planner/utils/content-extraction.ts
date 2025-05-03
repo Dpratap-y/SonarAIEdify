@@ -10,6 +10,42 @@ function escapeRegExp(string: string): string {
 }
 
 /**
+ * Creates a regex pattern for heading match with multiple heading levels
+ */
+function createHeadingPattern(text: string): string {
+  const escaped = escapeRegExp(text)
+  return `## ${escaped}|### ${escaped}|#### ${escaped}`
+}
+
+/**
+ * Finds the index of a section heading in content
+ */
+function findHeadingIndex(content: string, heading: string, tryCapitalized = true): number | null {
+  // Try with original case
+  const pattern = createHeadingPattern(heading)
+  const regex = new RegExp(pattern)
+  const match = content.match(regex)
+
+  if (match && match.index !== undefined) {
+    return match.index
+  }
+
+  // Try with capitalized first letter if requested
+  if (tryCapitalized) {
+    const capitalized = heading.charAt(0).toUpperCase() + heading.slice(1)
+    const capitalizedPattern = createHeadingPattern(capitalized)
+    const capitalizedRegex = new RegExp(capitalizedPattern)
+    const capitalizedMatch = content.match(capitalizedRegex)
+
+    if (capitalizedMatch && capitalizedMatch.index !== undefined) {
+      return capitalizedMatch.index
+    }
+  }
+
+  return null
+}
+
+/**
  * Extracts a section from markdown content between two headings
  */
 export function extractSection(
@@ -17,65 +53,20 @@ export function extractSection(
   sectionStart: string,
   sectionEnd: string | null
 ): string {
-  const escapedSectionStart = escapeRegExp(sectionStart)
-
-  // Create patterns that match both cases
-  const headingPattern = `## ${escapedSectionStart}|### ${escapedSectionStart}|#### ${escapedSectionStart}`
-  const startRegex = new RegExp(headingPattern)
-
-  const startMatch = content.match(startRegex)
-  if (!startMatch) {
-    // Try with uppercase first letter as fallback
-    const capitalizedStart = sectionStart.charAt(0).toUpperCase() + sectionStart.slice(1)
-    const escapedCapitalizedStart = escapeRegExp(capitalizedStart)
-    const capitalizedPattern = `## ${escapedCapitalizedStart}|### ${escapedCapitalizedStart}|#### ${escapedCapitalizedStart}`
-    const capitalizedRegex = new RegExp(capitalizedPattern)
-
-    const capitalizedMatch = content.match(capitalizedRegex)
-    if (!capitalizedMatch) return ''
-
-    const startIndex = capitalizedMatch.index
-    if (startIndex === undefined) return ''
-
-    let endIndex = content.length
-    if (sectionEnd) {
-      // Try with the original case first
-      const escapedSectionEnd = escapeRegExp(sectionEnd)
-      const endPattern = `## ${escapedSectionEnd}|### ${escapedSectionEnd}|#### ${escapedSectionEnd}`
-      const endRegex = new RegExp(endPattern)
-
-      const endMatch = content.match(endRegex)
-      if (endMatch && endMatch.index !== undefined) {
-        endIndex = endMatch.index
-      } else {
-        // Try with uppercase first letter
-        const capitalizedEnd = sectionEnd.charAt(0).toUpperCase() + sectionEnd.slice(1)
-        const escapedCapitalizedEnd = escapeRegExp(capitalizedEnd)
-        const capitalizedEndPattern = `## ${escapedCapitalizedEnd}|### ${escapedCapitalizedEnd}|#### ${escapedCapitalizedEnd}`
-        const capitalizedEndRegex = new RegExp(capitalizedEndPattern)
-
-        const capitalizedEndMatch = content.match(capitalizedEndRegex)
-        if (capitalizedEndMatch && capitalizedEndMatch.index !== undefined) {
-          endIndex = capitalizedEndMatch.index
-        }
-      }
-    }
-
-    return content.substring(startIndex, endIndex).trim()
+  // Find start index
+  const startIndex = findHeadingIndex(content, sectionStart)
+  if (startIndex === null) {
+    return ''
   }
 
-  const startIndex = startMatch.index
-  if (startIndex === undefined) return ''
-
+  // Default end index is end of content
   let endIndex = content.length
-  if (sectionEnd) {
-    const escapedSectionEnd = escapeRegExp(sectionEnd)
-    const endPattern = `## ${escapedSectionEnd}|### ${escapedSectionEnd}|#### ${escapedSectionEnd}`
-    const endRegex = new RegExp(endPattern)
 
-    const endMatch = content.match(endRegex)
-    if (endMatch && endMatch.index !== undefined) {
-      endIndex = endMatch.index
+  // Find end index if sectionEnd is provided
+  if (sectionEnd) {
+    const endHeadingIndex = findHeadingIndex(content, sectionEnd)
+    if (endHeadingIndex !== null) {
+      endIndex = endHeadingIndex
     }
   }
 
@@ -197,6 +188,36 @@ export function processCrossCurricular(
 }
 
 /**
+ * Processes differentiation categories from a content item
+ */
+function processDifferentiationCategory(
+  item: string,
+  categoryName: string
+): { isCategory: boolean; cleanedItem: string } {
+  const lowerCategoryName = categoryName.toLowerCase()
+  const lowerItem = item.toLowerCase()
+  
+  const isCategory =
+    item.includes(`${categoryName}:`) || 
+    lowerItem.includes(lowerCategoryName) || 
+    !!lowerItem.match(new RegExp(`^${lowerCategoryName}$`, 'i'))
+  
+  if (!isCategory) {
+    return { isCategory: false, cleanedItem: item }
+  }
+  
+  // Clean the item text of category markers
+  const cleanedItem = item
+    .replace(new RegExp(`${categoryName}:`, 'g'), '')
+    .replace(/\*+/g, '')
+    .replace(new RegExp(`-\\s*${categoryName}`, 'g'), '')
+    .replace(new RegExp(categoryName, 'g'), '')
+    .trim()
+    
+  return { isCategory: true, cleanedItem }
+}
+
+/**
  * Processes differentiation sections that cleans the text properly
  */
 export function processDifferentiationContent(
@@ -207,82 +228,51 @@ export function processDifferentiationContent(
   let currentContent: string[] = []
 
   items.forEach((item) => {
-    let cleanedItem = item.replace(/^[-•*]\s+/, '') // Remove bullet points
+    // Remove bullet points
+    let cleanedItem = item.replace(/^[-•*]\s+/, '')
 
-    // Handle "Support" keyword with or without asterisks
-    if (
-      cleanedItem.includes('Support:') ||
-      cleanedItem.toLowerCase().includes('support') ||
-      cleanedItem.match(/^support$/i)
-    ) {
-      if (currentContent.length > 0) {
-        result.push({ type: currentType, content: currentContent })
-        currentContent = []
-      }
-      currentType = 'support'
-      // Fix ReDoS vulnerability by splitting complex regex into simpler parts
-      cleanedItem = cleanedItem
-        .replace(/Support:/g, '')
-        .replace(/\*+/g, '')
-        .replace(/-\s*Support/g, '')
-        .replace(/Support/g, '')
-        .trim()
+    // Process each category
+    const categories = [
+      { name: 'Support', type: 'support' },
+      { name: 'Core', type: 'core' },
+      { name: 'Extension', type: 'extension' },
+    ]
 
-      if (cleanedItem) {
-        currentContent.push(cleanedItem)
+    let categoryDetected = false
+
+    for (const category of categories) {
+      const { isCategory, cleanedItem: newItem } = processDifferentiationCategory(
+        cleanedItem,
+        category.name
+      )
+
+      if (isCategory) {
+        // Add current content to results before changing type
+        if (currentContent.length > 0) {
+          result.push({ type: currentType, content: currentContent })
+          currentContent = []
+        }
+
+        currentType = category.type
+        cleanedItem = newItem
+        categoryDetected = true
+
+        // Only add non-empty items
+        if (cleanedItem) {
+          currentContent.push(cleanedItem)
+        }
+
+        break
       }
     }
-    // Handle "Core" keyword with or without asterisks
-    else if (
-      cleanedItem.includes('Core:') ||
-      cleanedItem.toLowerCase().includes('core') ||
-      cleanedItem.match(/^core$/i)
-    ) {
-      if (currentContent.length > 0) {
-        result.push({ type: currentType, content: currentContent })
-        currentContent = []
-      }
-      currentType = 'core'
-      // Fix ReDoS vulnerability by splitting complex regex into simpler parts
-      cleanedItem = cleanedItem
-        .replace(/Core:/g, '')
-        .replace(/\*+/g, '')
-        .replace(/-\s*Core/g, '')
-        .replace(/Core/g, '')
-        .trim()
 
-      if (cleanedItem) {
-        currentContent.push(cleanedItem)
-      }
-    }
-    // Handle "Extension" keyword with or without asterisks
-    else if (
-      cleanedItem.includes('Extension:') ||
-      cleanedItem.toLowerCase().includes('extension') ||
-      cleanedItem.match(/^extension$/i)
-    ) {
-      if (currentContent.length > 0) {
-        result.push({ type: currentType, content: currentContent })
-        currentContent = []
-      }
-      currentType = 'extension'
-      // Fix ReDoS vulnerability by splitting complex regex into simpler parts
-      cleanedItem = cleanedItem
-        .replace(/Extension:/g, '')
-        .replace(/\*+/g, '')
-        .replace(/-\s*Extension/g, '')
-        .replace(/Extension/g, '')
-        .trim()
-
-      if (cleanedItem) {
-        currentContent.push(cleanedItem)
-      }
-    } else {
-      // For content items, don't remove any leading dash
+    // For non-category items, just add to current content
+    if (!categoryDetected) {
       currentContent.push(cleanedItem.trim())
     }
   })
 
+  // Add the last batch of content
   if (currentContent.length > 0) {
     result.push({ type: currentType, content: currentContent })
   }
