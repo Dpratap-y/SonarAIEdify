@@ -26,7 +26,7 @@ function findHeadingIndex(content: string, heading: string, tryCapitalized = tru
   const regex = new RegExp(pattern)
   const match = content.match(regex)
 
-  if (match && match.index !== undefined) {
+  if (match?.index !== undefined) {
     return match.index
   }
 
@@ -37,7 +37,7 @@ function findHeadingIndex(content: string, heading: string, tryCapitalized = tru
     const capitalizedRegex = new RegExp(capitalizedPattern)
     const capitalizedMatch = content.match(capitalizedRegex)
 
-    if (capitalizedMatch && capitalizedMatch.index !== undefined) {
+    if (capitalizedMatch?.index !== undefined) {
       return capitalizedMatch.index
     }
   }
@@ -79,7 +79,7 @@ export function extractSection(
 export function extractValue(content: string, key: string): string {
   const regex = new RegExp(`\\*\\*${key}\\*\\*\\s+([^\\n]+)`, 'i')
   const match = content.match(regex)
-  return match ? match[1].trim() : ''
+  return match?.[1]?.trim() ?? ''
 }
 
 /**
@@ -155,8 +155,8 @@ export function processCrossCurricular(
     const subjectMatch = line.match(/^(?:-\s*)?(?:\*\*)?([A-Za-z]{1,30})(?:\*\*)?:?\s*(.*)/)
 
     if (subjectMatch) {
-      const subject = subjectMatch[1].trim()
-      const description = subjectMatch[2] ? subjectMatch[2].trim() : ''
+      const subject = subjectMatch[1]?.trim() ?? ''
+      const description = subjectMatch[2]?.trim() ?? ''
 
       // If we have a subject/description in progress, save it
       if (currentSubject && (currentDescription || description)) {
@@ -196,16 +196,16 @@ function processDifferentiationCategory(
 ): { isCategory: boolean; cleanedItem: string } {
   const lowerCategoryName = categoryName.toLowerCase()
   const lowerItem = item.toLowerCase()
-  
+
   const isCategory =
-    item.includes(`${categoryName}:`) || 
-    lowerItem.includes(lowerCategoryName) || 
+    item.includes(`${categoryName}:`) ||
+    lowerItem.includes(lowerCategoryName) ||
     !!lowerItem.match(new RegExp(`^${lowerCategoryName}$`, 'i'))
-  
+
   if (!isCategory) {
     return { isCategory: false, cleanedItem: item }
   }
-  
+
   // Clean the item text of category markers
   const cleanedItem = item
     .replace(new RegExp(`${categoryName}:`, 'g'), '')
@@ -213,7 +213,7 @@ function processDifferentiationCategory(
     .replace(new RegExp(`-\\s*${categoryName}`, 'g'), '')
     .replace(new RegExp(categoryName, 'g'), '')
     .trim()
-    
+
   return { isCategory: true, cleanedItem }
 }
 

@@ -188,9 +188,9 @@ const PeelResponse: React.FC<PeelResponseProps> = ({ data }) => {
       <Head>
         <style>
           {`
-            .list-items-primary li::marker {
-              color: var(--primary);
-            }
+        .list-items-primary li::marker {
+          color: var(--primary);
+        }
           `}
         </style>
       </Head>
