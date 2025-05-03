@@ -24,7 +24,7 @@ function findHeadingIndex(content: string, heading: string, tryCapitalized = tru
   // Try with original case
   const pattern = createHeadingPattern(heading)
   const regex = new RegExp(pattern)
-  const match = content.match(regex)
+  const match = regex.exec(content)
 
   if (match?.index !== undefined) {
     return match.index
@@ -35,7 +35,7 @@ function findHeadingIndex(content: string, heading: string, tryCapitalized = tru
     const capitalized = heading.charAt(0).toUpperCase() + heading.slice(1)
     const capitalizedPattern = createHeadingPattern(capitalized)
     const capitalizedRegex = new RegExp(capitalizedPattern)
-    const capitalizedMatch = content.match(capitalizedRegex)
+    const capitalizedMatch = capitalizedRegex.exec(content)
 
     if (capitalizedMatch?.index !== undefined) {
       return capitalizedMatch.index
@@ -78,7 +78,7 @@ export function extractSection(
  */
 export function extractValue(content: string, key: string): string {
   const regex = new RegExp(`\\*\\*${key}\\*\\*\\s+([^\\n]+)`, 'i')
-  const match = content.match(regex)
+  const match = regex.exec(content)
   return match?.[1]?.trim() ?? ''
 }
 
@@ -103,7 +103,7 @@ export function cleanContent(content: string): string[] {
       // Trim whitespace
       let trimmed = line.trim()
       // Skip empty lines and header markers
-      if (!trimmed || trimmed.match(/^#{1,6}$/)) {
+      if (!trimmed || new RegExp('^#{1,6}$').test(trimmed)) {
         return ''
       }
 
@@ -152,7 +152,8 @@ export function processCrossCurricular(
 
     // Special case for lines with subject identifiers
     // E.g., "- **English**:" or "English:" or "**English**:" or just "English"
-    const subjectMatch = line.match(/^(?:-\s*)?(?:\*\*)?([A-Za-z]{1,30})(?:\*\*)?:?\s*(.*)/)
+    const regex = new RegExp(/^(?:-\s*)?(?:\*\*)?([A-Za-z]{1,30})(?:\*\*)?:?\s*(.*)/)
+    const subjectMatch = regex.exec(line)
 
     if (subjectMatch) {
       const subject = subjectMatch[1]?.trim() ?? ''
@@ -200,7 +201,7 @@ function processDifferentiationCategory(
   const isCategory =
     item.includes(`${categoryName}:`) ||
     lowerItem.includes(lowerCategoryName) ||
-    !!lowerItem.match(new RegExp(`^${lowerCategoryName}$`, 'i'))
+    new RegExp(`^${lowerCategoryName}$`, 'i').test(lowerItem)
 
   if (!isCategory) {
     return { isCategory: false, cleanedItem: item }
