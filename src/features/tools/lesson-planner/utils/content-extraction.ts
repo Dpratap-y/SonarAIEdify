@@ -103,7 +103,7 @@ export function cleanContent(content: string): string[] {
       // Trim whitespace
       let trimmed = line.trim()
       // Skip empty lines and header markers
-      if (!trimmed || new RegExp('^#{1,6}$').test(trimmed)) {
+      if (!trimmed || /^#{1,6}$/.test(trimmed)) {
         return ''
       }
 
@@ -152,7 +152,7 @@ export function processCrossCurricular(
 
     // Special case for lines with subject identifiers
     // E.g., "- **English**:" or "English:" or "**English**:" or just "English"
-    const regex = new RegExp(/^(?:-\s*)?(?:\*\*)?([A-Za-z]{1,30})(?:\*\*)?:?\s*(.*)/)
+    const regex = /^(?:-\s*)?(?:\*\*)?([A-Za-z]{1,30})(?:\*\*)?:?\s*(.*)/
     const subjectMatch = regex.exec(line)
 
     if (subjectMatch) {
