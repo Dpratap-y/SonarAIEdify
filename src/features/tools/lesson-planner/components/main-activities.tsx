@@ -104,8 +104,11 @@ const MainActivities: React.FC<MainActivitiesProps> = ({ content }) => {
           // Process differentiation content to handle the nested structure
           const differentiationSections = processDifferentiationContent(differentiation)
 
+          // Generate a stable key based on title and content to replace index-based key
+          const activityKey = `activity-${title.replace(/\s+/g, '-').toLowerCase()}-${index}`
+
           return (
-            <div key={index} className="rounded-md border p-3">
+            <div key={activityKey} className="rounded-md border p-3">
               <div className="mb-3 flex items-center justify-between">
                 <h4 className="text-primary font-medium">{cleanTitle}</h4>
                 {duration && (
@@ -140,24 +143,29 @@ const MainActivities: React.FC<MainActivitiesProps> = ({ content }) => {
                 <div className="mt-3 border-t pt-3">
                   <SectionTitle>Differentiation</SectionTitle>
                   <div className="space-y-2">
-                    {differentiationSections.map((section, i) => (
-                      <div key={i} className="mb-2">
-                        {section.type !== 'default' && (
-                          <h5
-                            className={`text-xs font-medium ${
-                              section.type === 'support'
-                                ? 'text-blue-600'
-                                : section.type === 'core'
-                                  ? 'text-green-600'
-                                  : 'text-orange-600'
-                            }`}
-                          >
-                            {section.type.charAt(0).toUpperCase() + section.type.slice(1)}
-                          </h5>
-                        )}
-                        <ContentList items={section.content} />
-                      </div>
-                    ))}
+                    {differentiationSections.map((section, i) => {
+                      // Generate a stable key based on section type and content
+                      const sectionKey = `diff-${section.type}-${i}-${section.content.length > 0 ? section.content[0].substring(0, 20).replace(/\s+/g, '-').toLowerCase() : ''}`
+
+                      return (
+                        <div key={sectionKey} className="mb-2">
+                          {section.type !== 'default' && (
+                            <h5
+                              className={`text-xs font-medium ${
+                                section.type === 'support'
+                                  ? 'text-blue-600'
+                                  : section.type === 'core'
+                                    ? 'text-green-600'
+                                    : 'text-orange-600'
+                              }`}
+                            >
+                              {section.type.charAt(0).toUpperCase() + section.type.slice(1)}
+                            </h5>
+                          )}
+                          <ContentList items={section.content} />
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )}
