@@ -24,8 +24,7 @@ const MainActivities: React.FC<MainActivitiesProps> = ({ content }) => {
   let currentActivity = ''
   let isInActivity = false
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
+  for (const line of lines) {
     if (line.startsWith('#### ')) {
       // If we found a new activity and already had one in progress, push it
       if (isInActivity && currentActivity.trim()) {
