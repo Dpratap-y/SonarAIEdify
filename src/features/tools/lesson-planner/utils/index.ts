@@ -22,26 +22,26 @@ function validateLessonPlanDuration(
     const durations: Array<{ activity: string; duration: number }> = []
 
     // Add starter duration
-    optionTotalDuration += option.starterActivity?.duration || 0
+    optionTotalDuration += option.starterActivity?.duration ?? 0
     durations.push({
       activity: 'Starter',
-      duration: option.starterActivity?.duration || 0,
+      duration: option.starterActivity?.duration ?? 0,
     })
 
     // Add main activities durations
     option.mainActivities.forEach((activity, index) => {
-      optionTotalDuration += activity.duration || 0
+      optionTotalDuration += activity.duration ?? 0
       durations.push({
         activity: `Main Activity ${index + 1}`,
-        duration: activity.duration || 0,
+        duration: activity.duration ?? 0,
       })
     })
 
     // Add plenary duration
-    optionTotalDuration += option.plenary?.duration || 0
+    optionTotalDuration += option.plenary?.duration ?? 0
     durations.push({
       activity: 'Plenary',
-      duration: option.plenary?.duration || 0,
+      duration: option.plenary?.duration ?? 0,
     })
 
     // Validate each option matches expected duration
