@@ -16,8 +16,7 @@ function validateLessonPlanDuration(
   requestedDuration: number
 ): boolean {
   // Check each lesson option individually
-  for (let i = 0; i < lessonPlan.lessonOptions.length; i++) {
-    const option = lessonPlan.lessonOptions[i]
+  for (const option of lessonPlan.lessonOptions) {
     let optionTotalDuration = 0
     const durations: Array<{ activity: string; duration: number }> = []
 
