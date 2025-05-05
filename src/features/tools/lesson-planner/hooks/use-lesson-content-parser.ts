@@ -61,7 +61,8 @@ interface SectionAvailability {
  * Extracts the title from the markdown content
  */
 function extractTitle(content: string): string {
-  const titleMatch = content.match(/^# (.+)$/m)
+  const titleRegex = /^# (.+)$/m
+  const titleMatch = titleRegex.exec(content)
   return titleMatch?.[1] ?? 'Lesson Plan'
 }
 
