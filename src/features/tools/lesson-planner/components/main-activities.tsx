@@ -147,18 +147,20 @@ const MainActivities: React.FC<MainActivitiesProps> = ({ content }) => {
                       // Generate a stable key based on section type and content
                       const sectionKey = `diff-${section.type}-${i}-${section.content.length > 0 ? section.content[0].substring(0, 20).replace(/\s+/g, '-').toLowerCase() : ''}`
 
+                      // Extract the nested ternary into a separate variable
+                      let typeColorClass = ''
+                      if (section.type === 'support') {
+                        typeColorClass = 'text-blue-600'
+                      } else if (section.type === 'core') {
+                        typeColorClass = 'text-green-600'
+                      } else if (section.type === 'extension') {
+                        typeColorClass = 'text-orange-600'
+                      }
+
                       return (
                         <div key={sectionKey} className="mb-2">
                           {section.type !== 'default' && (
-                            <h5
-                              className={`text-xs font-medium ${
-                                section.type === 'support'
-                                  ? 'text-blue-600'
-                                  : section.type === 'core'
-                                    ? 'text-green-600'
-                                    : 'text-orange-600'
-                              }`}
-                            >
+                            <h5 className={`text-xs font-medium ${typeColorClass}`}>
                               {section.type.charAt(0).toUpperCase() + section.type.slice(1)}
                             </h5>
                           )}
