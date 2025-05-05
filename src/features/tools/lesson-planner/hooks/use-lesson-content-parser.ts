@@ -107,6 +107,43 @@ export function useLessonContentParser(content: string): ParsedLessonContent {
     const hasReflection = content.includes('Reflection Suggestions')
     const hasAdditionalNotes = content.includes('Additional Notes')
 
+    // Determine end headers for each section using if/else logic instead of nested ternaries
+    // For assessment section
+    let assessmentEndHeader = null
+    if (hasDifferentiation) {
+      assessmentEndHeader = 'Differentiation & SEN Support'
+    } else if (hasCrossCurricular) {
+      assessmentEndHeader = 'Cross-Curricular Links'
+    } else if (hasAdditionalNotes) {
+      assessmentEndHeader = 'Additional Notes'
+    } else if (hasReflection) {
+      assessmentEndHeader = 'Reflection Suggestions'
+    }
+
+    // For differentiation section
+    let differentiationEndHeader = null
+    if (hasCrossCurricular) {
+      differentiationEndHeader = 'Cross-Curricular Links'
+    } else if (hasAdditionalNotes) {
+      differentiationEndHeader = 'Additional Notes'
+    } else if (hasReflection) {
+      differentiationEndHeader = 'Reflection Suggestions'
+    }
+
+    // For cross-curricular section
+    let crossCurricularEndHeader = null
+    if (hasAdditionalNotes) {
+      crossCurricularEndHeader = 'Additional Notes'
+    } else if (hasReflection) {
+      crossCurricularEndHeader = 'Reflection Suggestions'
+    }
+
+    // For additional notes section
+    let additionalNotesEndHeader = null
+    if (hasReflection) {
+      additionalNotesEndHeader = 'Reflection Suggestions'
+    }
+
     // Extract sections from the markdown content with optimized logic
     const sections: LessonSections = {
       overview: extractSection(content, 'Lesson Overview', 'Learning Objectives'),
@@ -118,50 +155,16 @@ export function useLessonContentParser(content: string): ParsedLessonContent {
       ),
       lessonOptions: extractSection(content, 'Lesson Options', 'Assessment Questions'),
       assessment: hasAssessmentQuestions
-        ? extractSection(
-            content,
-            'Assessment Questions',
-            hasDifferentiation
-              ? 'Differentiation & SEN Support'
-              : hasCrossCurricular
-                ? 'Cross-Curricular Links'
-                : hasAdditionalNotes
-                  ? 'Additional Notes'
-                  : hasReflection
-                    ? 'Reflection Suggestions'
-                    : null
-          )
+        ? extractSection(content, 'Assessment Questions', assessmentEndHeader)
         : '',
       differentiation: hasDifferentiation
-        ? extractSection(
-            content,
-            'Differentiation & SEN Support',
-            hasCrossCurricular
-              ? 'Cross-Curricular Links'
-              : hasAdditionalNotes
-                ? 'Additional Notes'
-                : hasReflection
-                  ? 'Reflection Suggestions'
-                  : null
-          )
+        ? extractSection(content, 'Differentiation & SEN Support', differentiationEndHeader)
         : '',
       crossCurricular: hasCrossCurricular
-        ? extractSection(
-            content,
-            'Cross-Curricular Links',
-            hasAdditionalNotes
-              ? 'Additional Notes'
-              : hasReflection
-                ? 'Reflection Suggestions'
-                : null
-          )
+        ? extractSection(content, 'Cross-Curricular Links', crossCurricularEndHeader)
         : '',
       additionalNotes: hasAdditionalNotes
-        ? extractSection(
-            content,
-            'Additional Notes',
-            hasReflection ? 'Reflection Suggestions' : null
-          )
+        ? extractSection(content, 'Additional Notes', additionalNotesEndHeader)
         : '',
       reflection: hasReflection ? extractSection(content, 'Reflection Suggestions', null) : '',
     }
