@@ -141,11 +141,13 @@ export async function generateAiResponse<T>({
 
       // Provide more detailed error information
       if (parseError instanceof z.ZodError) {
-        throw new APIError(
-          `Failed to parse AI response: ${parseError.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join('; ')}`,
-          400,
-          'VALIDATION_ERROR'
-        )
+        // Extract error details without nested template literals
+        const errorDetails = parseError.errors
+          .map((e) => `${e.path.join('.')}: ${e.message}`)
+          .join('; ')
+
+        const errorMessage = `Failed to parse AI response: ${errorDetails}`
+        throw new APIError(errorMessage, 400, 'VALIDATION_ERROR')
       }
 
       throw new APIError('Failed to parse AI response', 500, 'PARSE_ERROR')
