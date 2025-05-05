@@ -54,7 +54,7 @@ export async function generateAiResponse<T>({
 }): Promise<AiResponse<T>> {
   try {
     console.log('Generating AI response with options:', {
-      model: options.model || config.openai.model,
+      model: options.model ?? config.openai.model,
       temperature: options.temperature ?? 0.7,
     })
 
@@ -86,8 +86,8 @@ export async function generateAiResponse<T>({
           content: userPrompt,
         },
       ],
-      model: options.model || config.openai.model,
-      response_format: { type: options.responseFormat || 'json_object' },
+      model: options.model ?? config.openai.model,
+      response_format: { type: options.responseFormat ?? 'json_object' },
       temperature: options.temperature ?? 0.7,
     })
     console.log('OpenAI API call completed')
@@ -130,9 +130,9 @@ export async function generateAiResponse<T>({
       return {
         response: validatedResponse,
         usage: {
-          inputTokens: completion.usage?.prompt_tokens || 0,
-          outputTokens: completion.usage?.completion_tokens || 0,
-          totalTokens: completion.usage?.total_tokens || 0,
+          inputTokens: completion.usage?.prompt_tokens ?? 0,
+          outputTokens: completion.usage?.completion_tokens ?? 0,
+          totalTokens: completion.usage?.total_tokens ?? 0,
         },
       }
     } catch (parseError) {
