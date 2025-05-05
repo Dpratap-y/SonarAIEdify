@@ -52,29 +52,35 @@ const MainActivities: React.FC<MainActivitiesProps> = ({ content }) => {
       <div className="space-y-6">
         {activityMatches.map((activity, index) => {
           // Extract activity title
-          const titleMatch = activity.match(/#### (.*?)(?=\n|$)/)
+          const titleRegex = /#### (.*?)(?=\n|$)/
+          const titleMatch = titleRegex.exec(activity)
           const title = titleMatch ? titleMatch[1].trim() : `Activity ${index + 1}`
 
           // Extract duration if present in the title
-          const durationMatch = title.match(/\((\d+) minutes\)/) || title.match(/\((\d+) MINUTES\)/)
+          const durationRegex = /\((\d+) minutes\)/
+          const durationRegexUpper = /\((\d+) MINUTES\)/
+          const durationMatch = durationRegex.exec(title) || durationRegexUpper.exec(title)
           const duration = durationMatch ? durationMatch[1] : null
 
           // Extract materials - clean content
-          const materialsMatch =
-            activity.match(/Materials:([\s\S]*?)(?=Instructions:|Differentiation:|$)/) ||
-            activity.match(/materials:([\s\S]*?)(?=instructions:|differentiation:|$)/)
+          const materialsRegex = /Materials:([\s\S]*?)(?=Instructions:|Differentiation:|$)/
+          const materialsRegexLower = /materials:([\s\S]*?)(?=instructions:|differentiation:|$)/
+          const materialsMatch = materialsRegex.exec(activity) || materialsRegexLower.exec(activity)
           const materials = materialsMatch ? cleanContent(materialsMatch[1]) : []
 
           // Extract instructions - clean content
+          const instructionsRegex = /Instructions:([\s\S]*?)(?=Materials:|Differentiation:|$)/
+          const instructionsRegexLower = /instructions:([\s\S]*?)(?=materials:|differentiation:|$)/
           const instructionsMatch =
-            activity.match(/Instructions:([\s\S]*?)(?=Materials:|Differentiation:|$)/) ||
-            activity.match(/instructions:([\s\S]*?)(?=materials:|differentiation:|$)/)
+            instructionsRegex.exec(activity) || instructionsRegexLower.exec(activity)
           const instructions = instructionsMatch ? cleanContent(instructionsMatch[1]) : []
 
           // Extract differentiation - clean content
+          const differentiationRegex = /Differentiation:([\s\S]*?)(?=Materials:|Instructions:|$)/
+          const differentiationRegexLower =
+            /differentiation:([\s\S]*?)(?=materials:|instructions:|$)/
           const differentiationMatch =
-            activity.match(/Differentiation:([\s\S]*?)(?=Materials:|Instructions:|$)/) ||
-            activity.match(/differentiation:([\s\S]*?)(?=materials:|instructions:|$)/)
+            differentiationRegex.exec(activity) || differentiationRegexLower.exec(activity)
           const differentiation = differentiationMatch ? cleanContent(differentiationMatch[1]) : []
 
           // Clean title for display
